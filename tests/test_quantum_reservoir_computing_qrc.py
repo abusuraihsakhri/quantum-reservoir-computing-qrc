@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+import math
 import pytest
 from agents.base import PHIGuard, AuditLogger, SecurityException
 from agents.models import SystemTaskPayload, UrgencyLevel, SystemIntegrityStatus
@@ -63,3 +64,49 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_input_validation_nan_inf():
+    """Test that NaN and Inf metric values are rejected."""
+    with pytest.raises(ValueError, match="finite"):
+        SystemTaskPayload(task_id="T1", target_identifier="KEY-01", primary_metric=float("nan"))
+
+    with pytest.raises(ValueError, match="finite"):
+        SystemTaskPayload(task_id="T1", target_identifier="KEY-01", primary_metric=float("inf"))
+
+    with pytest.raises(ValueError, match="finite"):
+        SystemTaskPayload(task_id="T1", target_identifier="KEY-01", primary_metric=10.0, secondary_metric=float("-inf"))
+
+
+def test_input_validation_empty_identifiers():
+    """Test that empty identifier fields are rejected."""
+    with pytest.raises(ValueError, match="non-empty"):
+        SystemTaskPayload(task_id="", target_identifier="KEY-01", primary_metric=10.0)
+
+    with pytest.raises(ValueError, match="non-empty"):
+        SystemTaskPayload(task_id="T1", target_identifier="", primary_metric=10.0)
+
+    with pytest.raises(ValueError, match="non-empty"):
+        SystemTaskPayload(task_id="   ", target_identifier="KEY-01", primary_metric=10.0)
+
+
+def test_batch_file_not_found():
+    """Test batch command handles missing input file gracefully."""
+    result = main(["batch", "-i", "nonexistent_file.csv"])
+    assert result == 1
+
+
+def test_audit_trail_integrity():
+    """Test that audit trail maintains cryptographic integrity."""
+    # Create a fresh supervisor to generate audit entries
+    supervisor = SystemSupervisor(model_provider="mock")
+    payload = SystemTaskPayload(
+        task_id="AUDIT-TEST-01",
+        target_identifier="KEY-AUDIT-01",
+        primary_metric=15.0,
+        secondary_metric=5.0,
+        status_descriptor="NOMINAL"
+    )
+    supervisor.process_task(payload)
+    assert AuditLogger.verify_integrity() is True
+    assert len(AuditLogger.get_trail()) > 0

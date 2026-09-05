@@ -57,7 +57,18 @@ class PHIGuard:
 class AuditTrail:
     """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
     def __init__(self, secret_key: Optional[str] = None):
-        self.secret_key = (secret_key or os.getenv("AUDIT_SECRET_KEY", "quantum-reservoir-computing-qrc-master-audit-key-2026")).encode("utf-8")
+        key = secret_key or os.getenv("AUDIT_SECRET_KEY")
+        if not key:
+            import warnings
+            warnings.warn(
+                "AUDIT_SECRET_KEY not set. Using ephemeral random key - audit trail will not persist across restarts. "
+                "Set AUDIT_SECRET_KEY environment variable for production use.",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+            import secrets
+            key = secrets.token_hex(32)
+        self.secret_key = key.encode("utf-8")
         self.logs: List[Dict[str, Any]] = []
 
     def log(self, actor: str, actor_tier: str, event_type: str, details: Dict[str, Any]) -> Dict[str, Any]:
