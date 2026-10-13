@@ -2,7 +2,10 @@
 FastAPI REST API Server for Quantum Reservoir Computing Qrc.
 """
 from pathlib import Path
-from fastapi import FastAPI, HTTPException
+import hmac
+import os
+from typing import Optional
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from .base import AuditLogger, SecurityException
@@ -55,7 +58,13 @@ def api_chat(req: ChatRequest):
 
 
 @app.get("/api/audit/logs")
-def api_audit_logs():
+def api_audit_logs(authorization: Optional[str] = Header(default=None)):
+    token = os.getenv("AUDIT_READ_TOKEN")
+    if not token:
+        raise HTTPException(status_code=503, detail="Audit-log reading is disabled")
+    supplied = authorization or ""
+    if not hmac.compare_digest(supplied, "Bearer " + token):
+        raise HTTPException(status_code=403, detail="Not authorized to read audit logs")
     return {"audit_trail": AuditLogger.get_trail(), "verified": AuditLogger.verify_integrity()}
 
 
