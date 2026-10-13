@@ -6,7 +6,7 @@ A Python research repository with **deterministic threshold-rule evaluators**, c
 
 ## Browser interface
 
-Open `web/index.html` in a modern browser for a local, unsigned evaluation, or serve the project using FastAPI to access the interface at `http://127.0.0.1:8000/`.
+To run the standalone interface locally, execute `python -m http.server 8001 -d web` and open `http://127.0.0.1:8001/`; or serve the entire project with FastAPI and use `http://127.0.0.1:8000/`. Direct `file://` viewing of ES modules is restricted in some browsers.
 
 - **Local preview:** All evaluation logic runs in JavaScript in the browser. No backend, Pyodide, or external API is required. Inputs remain on the device, and outputs are explicitly unsigned.
 - **Connected API:** Select the API mode only when the Python backend is running at the same origin. Requests are sent to `/api/audit`; the server returns a dossier and in-memory HMAC audit entry.
