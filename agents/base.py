@@ -25,7 +25,7 @@ PHI_PATTERNS = [
 
 
 class SecurityException(Exception):
-    """Raised when outbound data violates HIPAA Safe Harbor or contains raw PHI."""
+    """Raised when a heuristic identifier pattern is detected."""
     pass
 
 
@@ -56,7 +56,7 @@ class PHIGuard:
 
 
 class AuditTrail:
-    """Cryptographic Tamper-Evident HMAC-SHA256 Audit Trail."""
+    """In-memory, HMAC-SHA256-linked event log (not persistent storage)."""
     def __init__(self, secret_key: Optional[str] = None):
         key = secret_key or os.getenv("AUDIT_SECRET_KEY")
         if not key:
