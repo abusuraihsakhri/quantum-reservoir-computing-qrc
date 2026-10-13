@@ -108,3 +108,24 @@ def test_simulation_rejects_nonpositive_iterations():
     from simulator import run_simulation
     with pytest.raises(ValueError, match="positive"):
         run_simulation(0)
+
+
+def test_legacy_model_rejects_nonfinite_metrics():
+    from quantum_reservoir.models import FrontierPayload
+    with pytest.raises(ValueError, match="finite"):
+        FrontierPayload("T-001", "TARGET-01", float("nan"), 1, "NOMINAL")
+    with pytest.raises(ValueError, match="finite"):
+        FrontierPayload("T-001", "TARGET-01", 10, float("inf"), "NOMINAL")
+
+
+def test_legacy_csv_false_flag_is_not_critical(tmp_path):
+    from quantum_reservoir.cli import main as legacy_main
+    source, target = tmp_path / "input.csv", tmp_path / "output.csv"
+    source.write_text(
+        "task_id,target_identifier,primary_metric,secondary_metric,is_critical_flag,status_descriptor\n"
+        "T-001,TARGET-01,10,2,False,NOMINAL\n", encoding="utf-8"
+    )
+    assert legacy_main(["batch", "-i", str(source), "-o", str(target)]) == 0
+    rows = target.read_text(encoding="utf-8")
+    assert "NOMINAL_OPTIMAL" in rows
+    assert "CRITICAL_INTERVENTION_REQUIRED" not in rows
