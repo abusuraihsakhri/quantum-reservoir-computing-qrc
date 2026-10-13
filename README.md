@@ -1,173 +1,94 @@
 # Quantum Reservoir Computing QRC
 
-> **Domain:** Post-Quantum Cryptography & Zero-Knowledge Architecture
-> **Reference Guidelines & Standards:** `NIST FIPS 203/204/205, NIST SP 800-90B & ISO/IEC Standards`
+A Python research repository with **deterministic threshold-rule evaluators**, command-line batch processing, and a FastAPI service. It also includes a standalone browser console for previewing those rules without a server.
 
-<div align="center">
+**Scientific scope:** Despite its historical name, the current implementation does **not** simulate interacting quantum spins, perform quantum-state evolution, train a reservoir readout, calculate memory capacity, or demonstrate a quantum advantage. The enrichment modules are placeholder threshold checks, not implementations of their quantum-computing names. The alert thresholds are repository-defined examples; they are **not** NIST, ISO, clinical, or cryptographic conformance criteria.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+## Browser interface
 
-</div>
+To run the standalone interface locally, execute `python -m http.server 8001 -d web` and open `http://127.0.0.1:8001/`; or serve the entire project with FastAPI and use `http://127.0.0.1:8000/`. Direct `file://` viewing of ES modules is restricted in some browsers.
 
----
+- **Local preview:** All evaluation logic runs in JavaScript in the browser. No backend, Pyodide, or external API is required. Inputs remain on the device, and outputs are explicitly unsigned.
+- **Connected API:** Select the API mode only when the Python backend is running at the same origin. Requests are sent to `/api/audit`; the server returns a dossier and in-memory HMAC audit entry.
+- **JSON export:** Save the displayed result from either execution mode.
 
-## 📖 What It Does
+The `web/` directory is also deployed by `.github/workflows/pages.yml` when GitHub Pages is enabled and configured to use GitHub Actions. A public live URL is not listed here until verified.
 
-Quantum Reservoir Computing QRC is an enterprise-grade analytical platform that combines quantum reservoir computing concepts with multi-agent consensus evaluation. It processes task payloads through specialized worker agents to produce cryptographically signed consensus dossiers with tamper-evident audit trails.
+## Python setup
 
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-- **Multi-Agent Consensus Engine**: Three specialized workers (InvariantQC, SafetyEscalation, ProtocolConformance) evaluate tasks independently
-- **Deterministic Calculation Engine**: Strict compliance with standard reference formulations and thresholds
-- **Risk & Urgency Classification**: Multi-tier categorization (ROUTINE, ELEVATED_RISK, CRITICAL_STAT_PANIC) with automated action recommendations
-- **Validation & Guardrails**: Rigorous input bounds checking, NaN/Inf detection, and anomaly detection
-- **Zero-PHI Outbound Interceptor**: Active regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers
-- **HMAC-SHA256 Audit Trail**: Chained, cryptographically signed logs for every evaluation
-
----
-
-## 💻 Installation
+Requires Python 3.10+ (the package metadata accepts Python 3.9+, but the CI matrix currently checks 3.10–3.13).
 
 ```bash
-# Clone the repository
 git clone https://github.com/abusuraihsakhri/quantum-reservoir-computing-qrc.git
 cd quantum-reservoir-computing-qrc
-
-# Install dependencies
-pip install fastapi uvicorn pydantic pytest
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[server,dev]"
 ```
 
----
+Windows: activate with `.venv\Scripts\activate`.
 
-## 💻 CLI Quickstart & Usage
+### CLI workflows
 
-### 1. Single Task Evaluation
 ```bash
-python cli.py audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2 --critical --status DISCORDANT
+quantum-reservoir-computing-qrc audit --task-id TASK-001 --target KEY-01 --primary 28.5 --secondary 14.2 --status DISCORDANT
+quantum-reservoir-computing-qrc batch -i sample.csv -o results.csv
+quantum-reservoir-computing-qrc chat "What is the system status?"
+quantum-reservoir-computing-qrc verify-audit
+quantum-reservoir-computing-qrc serve --host 127.0.0.1 --port 8000
 ```
 
-### 2. System Configuration Query
-```bash
-python cli.py chat "What is the system status?"
-```
+Equivalent local CLI: `python cli.py`. An older, independent rule evaluator remains accessible through `python -m quantum_reservoir.cli`; its thresholds and output schema differ from the main `agents/` pipeline.
 
-### 3. Batch Processing
-```bash
-python cli.py batch -i sample.csv -o results.csv
-```
+**Main worker rules:** Primary metric greater than 25 generates an elevated alert. Secondary metric greater than 12 generates an elevated alert; a critical flag produces a critical alert. Status descriptors containing `DISCORDANT`, `ANOMALY`, `MUTANT`, `VIOLATION`, `FAIL`, or `REJECT` generate a conformance alert. Critical alerts take priority.
 
-### 4. Verify Audit Trail Integrity
-```bash
-python cli.py verify-audit
-```
+Input CSV columns are `task_id`, `target_identifier`, `primary_metric`, `secondary_metric`, `status_descriptor`, and `is_critical_flag`. Invalid and pattern-blocked rows are skipped with a warning; other valid rows are exported with summary fields. For the HTTP schema and interactive API docs, run the server and open `/docs`.
 
-### 5. Launch REST API Server
+### API and Docker
+
 ```bash
 python cli.py serve --host 127.0.0.1 --port 8000
+# or
+docker build -t qrc-evaluator .
+docker run --rm -p 127.0.0.1:8000:8000 -e AUDIT_SECRET_KEY="your-random-secret" qrc-evaluator
 ```
 
-### Parameter Reference
-- `--task-id`: Unique task identifier (required)
-- `--target`: Target entity identifier (required)
-- `--primary`: Primary metric value (float, required)
-- `--secondary`: Secondary metric value (float, default: 0.0)
-- `--critical`: Flag for critical/emergency status
-- `--status`: Status descriptor (NOMINAL, DISCORDANT, ANOMALY, etc.)
+The service provides `GET /health`, `GET /metrics`, `POST /api/audit`, `POST /api/chat`, and an optionally enabled `GET /api/audit/logs`. To read audit logs, set `AUDIT_READ_TOKEN` on the server and send `Authorization: Bearer <token>`. If the variable is unset the log endpoint is disabled. The mock chat responder does not run inference; model providers other than `mock` are not implemented.
 
-### Input Data Schema
+## Privacy and security
 
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Unique task identifier | Required |
-| `target_identifier` | Target entity identifier | Required |
-| `primary_metric` | Primary measurement value | Required |
-| `secondary_metric` | Secondary measurement value | Optional |
-| `is_critical_flag` | Emergency escalation flag | Optional |
-| `status_descriptor` | Status code descriptor | Optional |
+Use only synthetic or nonsensitive identifiers. The server has basic pattern screening for certain identifiers, **not comprehensive de-identification or HIPAA compliance**. The API has no general authentication, and is intended for trusted local use rather than public exposure.
 
----
+HMAC-SHA256 signs **in-memory** audit-chain entries when `AUDIT_SECRET_KEY` is configured. Without it, a randomly generated ephemeral key is used and an initialization warning is emitted. Integrity verification recalculates signatures and linked hashes, but it cannot detect deletion of the entire log, independently prove completeness, or recover events after restart. `verify-audit` checks only the log in the current process; running it as a separate command starts with an empty log.
 
-## 🛡️ Security & Enterprise Architecture
+The browser preview performs **no cryptographic signing**, stores no results remotely, and does not represent a validated quantum computation.
 
-* **Zero-PHI Outbound Interceptor:** Active regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition
-* **Input Validation:** Finite metric validation (NaN/Inf rejection), non-empty identifier enforcement
-* **Secure Key Management:** Audit signing key sourced from `AUDIT_SECRET_KEY` environment variable with secure fallback
-
-### Environment Variables
-- `AUDIT_SECRET_KEY`: Secret key for HMAC-SHA256 audit signing (generate with `python -c "import secrets; print(secrets.token_hex(32))"`)
-- `MODEL_PROVIDER`: LLM provider selection (mock, ollama, claude, openai)
-
----
-
-## 🧪 Testing & Verification
-
-Run the automated test suite:
+## Quality checks
 
 ```bash
-pytest -v
+python -m pytest -q
+python -m compileall -q agents quantum_reservoir cli.py enrichment.py simulator.py
+node --check web/app.mjs
+node --test tests/web.test.mjs
+python simulator.py 100
 ```
 
-Execute high-throughput batch simulation benchmarks:
+GitHub Actions runs Python tests on 3.10–3.13, browser evaluator tests on Node 22, and a Python dependency vulnerability audit.
 
-```bash
-python simulator.py 1000
-```
+## Repository structure
 
----
+- `agents/` — main Pydantic schemas, three deterministic workers, supervisor, in-memory audit log, FastAPI application.
+- `quantum_reservoir/` — independent legacy rule engine, CLI, and optional server.
+- `enrichment.py` — named enrichment placeholders (threshold tests, not QRC dynamics).
+- `cli.py` and `simulator.py` — main command line and synthetic traffic generator.
+- `web/` — responsive standalone HTML/JavaScript evaluation console.
+- `tests/` — Python and JavaScript regression tests.
+- `Dockerfile` and `docker-compose.yml` — local container deployment.
 
-## 🐳 Container Deployment
+## Browser compatibility
 
-```bash
-# Build and run with Docker
-docker build -t quantum-reservoir-computing-qrc .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") quantum-reservoir-computing-qrc
+The static console uses modern standard JavaScript modules, Fetch, and Blob downloads. It is designed for current Chromium, Firefox, and Safari. JavaScript must be enabled; connected mode requires a reachable same-origin backend.
 
-# Or use docker-compose
-AUDIT_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))") docker-compose up
-```
+## License
 
----
-
-## 📁 Project Structure
-
-```
-quantum-reservoir-computing-qrc/
-├── agents/                  # Core multi-agent system
-│   ├── api.py              # FastAPI REST endpoints
-│   ├── base.py             # Security, PHI guard, audit trail
-│   ├── models.py           # Pydantic data models
-│   ├── supervisor.py       # Master orchestrator
-│   ├── workers.py          # Specialized worker agents
-│   ├── llm_factory.py      # LLM provider factory
-│   ├── learning.py         # Bayesian calibration engine
-│   ├── metrics.py          # Prometheus metrics collector
-│   └── streamer.py         # WebSocket telemetry broadcaster
-├── quantum_reservoir/       # Quantum reservoir computing module
-│   ├── agents.py           # QRC coordinator and sub-agents
-│   ├── engine.py           # Core algorithmic engine
-│   ├── models.py           # QRC data models
-│   ├── server.py           # QRC FastAPI server
-│   └── cli.py              # QRC CLI interface
-├── tests/                   # Test suite
-├── web/                     # Web operations console
-├── cli.py                   # Main CLI entry point
-├── simulator.py             # High-throughput simulation
-├── enrichment.py            # Enrichment feature modules
-├── pyproject.toml           # Project configuration
-├── Dockerfile               # Container build
-└── docker-compose.yml       # Container orchestration
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT. See [LICENSE](LICENSE).

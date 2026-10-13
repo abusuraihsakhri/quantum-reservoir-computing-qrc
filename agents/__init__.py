@@ -1,7 +1,7 @@
 """
-Quantum Reservoir Computing Qrc — Enterprise Automated Analytical Suite.
-Domain: Post-Quantum Cryptography & Hardware Security
-Standard: NIST FIPS 203/204/205 / ISO/IEC 17825 Standards
+Quantum Reservoir Computing Qrc — Deterministic Threshold Evaluation Suite.
+Domain: Threshold-rule evaluation
+Reference: repository-defined, non-certified rules
 
 """
 __version__ = "3.0.0-ENTERPRISE"

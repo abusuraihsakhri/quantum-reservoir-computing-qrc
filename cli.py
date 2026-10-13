@@ -7,7 +7,7 @@ import json
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import AuditLogger
+from agents.base import AuditLogger, SecurityException
 
 supervisor = SystemSupervisor(model_provider="mock")
 
@@ -56,7 +56,7 @@ def main(argv=None):
         dossier = supervisor.process_task(payload)
         print("=" * 80)
         print(f"  QUANTUM RESERVOIR COMPUTING QRC")
-        print(f"  Domain: Post-Quantum Cryptography & Hardware Security | Standard: NIST FIPS 203/204/205 / ISO/IEC 17825 Standards")
+        print(f"  Domain: Deterministic threshold-rule evaluation | Not a compliance assessment")
         print(f"  Dossier ID: {dossier.dossier_id} | Urgency: [{dossier.overall_urgency.value}]")
         print("=" * 80)
         for a in dossier.alerts:
@@ -76,7 +76,9 @@ def main(argv=None):
     if args.command == "verify-audit":
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
-        print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
+        print(f"Audit Trail Blocks: {len(trail)} | Current-process HMAC chain valid: {valid}")
+        if not trail:
+            print("No events in this process. Previous runs are not persisted.")
         return 0
 
     if args.command == "batch":
@@ -92,7 +94,7 @@ def main(argv=None):
             print(f"Error: Permission denied reading '{args.input}'", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for r in rows:
             try:
@@ -111,7 +113,7 @@ def main(argv=None):
                 row_dict["total_alerts"] = dossier.total_alerts
                 row_dict["audit_hash"] = dossier.audit_hash
                 out_rows.append(row_dict)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError, SecurityException) as e:
                 print(f"Warning: Skipping row due to invalid data: {e}", file=sys.stderr)
 
         try:

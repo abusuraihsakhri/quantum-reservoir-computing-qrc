@@ -1,15 +1,14 @@
-version: '3.8'
-
 services:
   quantum-reservoir-computing-qrc:
     build: .
     container_name: quantum-reservoir-computing-qrc
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       # Generate a secure key: python -c "import secrets; print(secrets.token_hex(32))"
       - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:-}
       - MODEL_PROVIDER=mock
+      - AUDIT_READ_TOKEN=${AUDIT_READ_TOKEN:-}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
