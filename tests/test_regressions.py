@@ -90,3 +90,21 @@ def test_batch_skips_phi_rows(tmp_path, capsys):
     lines = target.read_text(encoding="utf-8").splitlines()
     assert len(lines) == 2
     assert "Skipping row" in capsys.readouterr().err
+
+
+def test_api_audit_logs_fail_closed(monkeypatch):
+    client = TestClient(app)
+    monkeypatch.delenv("AUDIT_READ_TOKEN", raising=False)
+    assert client.get("/api/audit/logs").status_code == 503
+    monkeypatch.setenv("AUDIT_READ_TOKEN", "local-test-read-token")
+    assert client.get("/api/audit/logs").status_code == 403
+    assert client.get("/api/audit/logs", headers={"Authorization": "Bearer wrong"}).status_code == 403
+    allowed = client.get("/api/audit/logs", headers={"Authorization": "Bearer local-test-read-token"})
+    assert allowed.status_code == 200
+    assert allowed.json()["verified"] is True
+
+
+def test_simulation_rejects_nonpositive_iterations():
+    from simulator import run_simulation
+    with pytest.raises(ValueError, match="positive"):
+        run_simulation(0)
