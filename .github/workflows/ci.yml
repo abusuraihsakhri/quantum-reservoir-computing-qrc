@@ -29,6 +29,11 @@ jobs:
         run: python -m compileall -q agents quantum_reservoir cli.py enrichment.py simulator.py
       - name: Run Python tests
         run: python -m pytest -q
+      - name: Smoke-test installed command and batch export
+        run: |
+          quantum-reservoir-computing-qrc --help
+          quantum-reservoir-computing-qrc batch -i sample.csv -o /tmp/qrc-evaluation-results.csv
+          python simulator.py 10
       - name: Run dependency audit
         run: |
           python -m pip install pip-audit
