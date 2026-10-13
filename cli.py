@@ -56,7 +56,7 @@ def main(argv=None):
         dossier = supervisor.process_task(payload)
         print("=" * 80)
         print(f"  QUANTUM RESERVOIR COMPUTING QRC")
-        print(f"  Domain: Post-Quantum Cryptography & Hardware Security | Standard: NIST FIPS 203/204/205 / ISO/IEC 17825 Standards")
+        print(f"  Domain: Deterministic threshold-rule evaluation | Not a compliance assessment")
         print(f"  Dossier ID: {dossier.dossier_id} | Urgency: [{dossier.overall_urgency.value}]")
         print("=" * 80)
         for a in dossier.alerts:
@@ -76,7 +76,9 @@ def main(argv=None):
     if args.command == "verify-audit":
         trail = AuditLogger.get_trail()
         valid = AuditLogger.verify_integrity()
-        print(f"Audit Trail Blocks: {len(trail)} | Cryptographic Integrity Verified: {valid}")
+        print(f"Audit Trail Blocks: {len(trail)} | Current-process HMAC chain valid: {valid}")
+        if not trail:
+            print("No events in this process. Previous runs are not persisted.")
         return 0
 
     if args.command == "batch":
