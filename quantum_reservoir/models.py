@@ -4,6 +4,7 @@ Domain: Quantum Machine Learning
 Standard: Quantum Reservoir Computing Framework
 """
 import datetime
+import math
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Dict, List, Optional, Any
@@ -25,6 +26,14 @@ class FrontierPayload:
     is_critical_flag: bool = False
     attributes: Dict[str, Any] = field(default_factory=dict)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now(datetime.timezone.utc).isoformat())
+
+    def __post_init__(self):
+        for identifier in (self.task_id, self.target_identifier):
+            if not isinstance(identifier, str) or not identifier.strip():
+                raise ValueError("Task and target identifiers must be non-empty strings")
+        for metric in (self.primary_metric, self.secondary_metric):
+            if isinstance(metric, bool) or not isinstance(metric, (int, float)) or not math.isfinite(metric):
+                raise ValueError("Metrics must be finite numbers")
 
 
 @dataclass
