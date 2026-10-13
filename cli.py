@@ -7,7 +7,7 @@ import json
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import AuditLogger
+from agents.base import AuditLogger, SecurityException
 
 supervisor = SystemSupervisor(model_provider="mock")
 
@@ -92,7 +92,7 @@ def main(argv=None):
             print(f"Error: Permission denied reading '{args.input}'", file=sys.stderr)
             return 1
 
-        out_fields = fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]
+        out_fields = list(dict.fromkeys(fieldnames + ["overall_urgency", "integrity_status", "total_alerts", "audit_hash"]))
         out_rows = []
         for r in rows:
             try:
@@ -111,7 +111,7 @@ def main(argv=None):
                 row_dict["total_alerts"] = dossier.total_alerts
                 row_dict["audit_hash"] = dossier.audit_hash
                 out_rows.append(row_dict)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError, SecurityException) as e:
                 print(f"Warning: Skipping row due to invalid data: {e}", file=sys.stderr)
 
         try:
